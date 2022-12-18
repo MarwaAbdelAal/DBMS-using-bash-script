@@ -13,22 +13,22 @@ do
 		case $REPLY in 
 	
 		1) echo enter database name 
-			read name
-			if ! [[ $name =~ ^[a-zA-Z_0-9]+$ ]]
+			read dbname
+			if ! [[ $dbname =~ ^[a-zA-Z_0-9]+$ ]]
 			then
 				echo Avoid special characters
 				break;
 			else
-            	check_name=`ls $DB_DIR/ | grep ^$name$`
-            	echo $check_name
+            	check_dbname=`ls $DB_DIR/ | grep ^$dbdbname$`
+            	echo $check_dbname
                 
-				if [ $check_name ]
+				if [ $check_dbname ]
 				then
-					echo database $name exists
+					echo database $dbname exists
 		            break;
                 else
-                    mkdir $DB_DIR/$name
-					echo $name database is created
+                    mkdir $DB_DIR/$dbname
+					echo $dbname database is created
 		            break;	
                 fi 
 		   fi
@@ -39,29 +39,29 @@ do
             ;;
 		  
 	    3) echo Enter database name to connect
-		   	read name
-            check_name=`ls $DB_DIR/ | grep ^$name$`
-		   	if [ -z $check_name ]
+		   	read dbname
+            check_dbname=`ls $DB_DIR/ | grep ^$dbname$`
+		   	if [ -z $check_dbname ]
             then
                 echo Invalid database name
 				break;
 		   	else	   
-		        cd $DB_DIR/$name
-		        echo you are connected to the $name database
+		        cd $DB_DIR/$dbname
+		        echo you are connected to the $dbname database
 				source $WORKING_DIR/tables.sh
 		   	fi
 		;;
 
 	    4) echo Enter database name to drop 
-		   	read name
-		   	check_name=`ls $DB_DIR/ | grep ^$name$`
-            if [ -z $check_name ]
+		   	read dbname
+		   	check_dbname=`ls $DB_DIR/ | grep ^$dbname$`
+            if [ -z $check_dbname ]
             then
-                echo database $name doesnot not exist
+                echo database $dbname doesnot not exist
 				break;
     	    else
-		        rm -r $DB_DIR/$name
-		        echo  $name database is dropped 
+		        rm -r $DB_DIR/$dbname
+		        echo  $dbname database is dropped 
 				break;
 		   	fi
 		;;
