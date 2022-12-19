@@ -153,6 +153,141 @@ function wirteMetaData {
     echo "primary_key:${col_primary[@]}" >> $newTable
 }
 
+
+function insert_data ()
+{
+            databases_num=`ls $DB_DIR/$1 | wc -l`
+
+            select tables in `ls $DB_DIR/$1` "Exit"
+            do 
+
+            if [ $REPLY -gt $databases_num ]
+            then 
+                exit
+
+            else [ $REPLY -lt $databases_num ] || [ $REPLY -eq $databases_num ]
+
+                # echo $REPLY
+                table_name=`ls $DB_DIR/$dbname/ | head -$REPLY`
+                echo $table_name
+
+                typeset -i col_num
+                col_num=`head -1 $DB_DIR/$dbname/$table_name`
+                
+                table_pk=`grep primary_key $DB_DIR/$dbname/$table_name | cut -d : -f2`
+                echo $table_pk
+
+                # echo $col_num
+                        
+                typeset -i counter
+                counter=1
+
+                until [ $counter -gt $col_num ]
+                do
+                    col_name=`tail +2 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter` 
+                    echo Enter $col_name column value           
+                    read data 
+                    
+                    #  Check data type 
+                    data_type=`tail +3 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter`      
+                    null_status=`tail +4 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter`
+
+                    if [ $data_type = "string" ]
+                    then
+                        if [ $null_status = "null" ]
+                        then
+                            if [ -z $data ]
+                            then 
+                                data="null"
+                            fi
+                        elif [ $null_status = "not_null" ]
+                        then
+                            while ! [[ $data =~ ^[a-zA-Z]+$ ]] || [[ $data == ^[\]$ ]]
+                            do  
+                                    echo Please Enter valid value !  try again 
+                                    read data
+                                    
+                            done 
+                        fi
+                        
+                        # echo $data
+
+                    elif [ $data_type="int" ]
+                    then 
+                        if [ $null_status = "null" ]
+                        then
+                            if [ -z $data ]
+                            then 
+                                data="null"
+                            fi
+                        elif [ $null_status = "not_null" ]
+                        then
+                        while ! [[ $data =~ ^[0-9]+$ ]]
+                        do
+                            echo  Please Enter valid value ! try again
+                            read data
+                        done
+                        fi
+
+                        # echo $data
+
+                    elif [ $data_type="float" ]
+                    then 
+                        if [ $null_status = "null" ]
+                        then
+                            if [ -z $data ]
+                            then 
+                                data="null"
+                            fi
+                        elif [ $null_status = "not_null" ]
+                        then
+                        while ! [[ $data =~ ^[0-9]+([.][0-9]+)?$ ]]
+                        do   
+                            echo  Please Enter valid value ! try again
+                            read data
+                        done
+                        fi
+                        # echo $data
+                
+                    fi
+                    
+                    if [[ $table_pk == $col_name ]]
+                    then
+                        echo $col_name
+                        echo $table_pk
+                        isUnique="`awk  -F ':' -v COL=$counter -v VALUE=^$data$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
+                        echo $isUnique
+
+                        until [[ -z $isUnique ]]
+                        do 
+                            echo you cannot repeat primary key! try again: 
+                            read data
+                            isUnique="`awk  -F ':' -v COL=$counter -v VALUE=^$data$ '$COL ~ VALUE {print $0;}' $DB_DIR/$1/$table_name`"
+                        done
+
+                    fi
+
+                    if [ -z $row_data ]
+                    then 
+                            row_data=$data
+                    else
+                            row_data=$row_data':'$data
+                    fi
+
+                counter=counter+1
+                done
+                # echo $row_data 
+                echo $row_data >> $DB_DIR/$dbname/$table_name 
+                echo one record inserted 
+            fi
+            exit
+            done     
+
+}
+
+
+
+
 while true
 do
     select choice in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table" "Disconnect"
