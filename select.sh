@@ -1,3 +1,5 @@
+function select()
+{
 select tables in `ls $DB_DIR/$dbname` "Exit"
 do 
 
@@ -5,8 +7,8 @@ do
   then 
        exit
 
-  else [ $REPLY -lt $databases_num ] || [ $REPLY -eq $databases_num ]
-
+  elif [ $REPLY -lt $databases_num ] || [ $REPLY -eq $databases_num ]
+  then
       table_name=`ls $DB_DIR/$dbname/ | head -$REPLY`
       echo $table_name
 
@@ -31,6 +33,6 @@ do
       done
     fi
 done
-
+}
 
 
