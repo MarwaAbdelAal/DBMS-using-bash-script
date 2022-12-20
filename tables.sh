@@ -110,12 +110,12 @@ function createTable {
             done
 
             echo "Table $newTable created successfully"
-            wirteMetaData
+            writeMetaData
         fi
     fi
 }
 
-function wirteMetaData {
+function writeMetaData {
     # Write 2nd row metadata to file (columns names)
     for i in ${!col_names[@]}
     do
@@ -153,41 +153,165 @@ function wirteMetaData {
     echo "primary_key:${col_primary[@]}" >> $newTable
 }
 
+function selectFromTable {
+    echo "This is all tables"
+    ls $DB_DIR/$dbname
+    echo -e "\nEnter table Name: \c"
+    read selectTable
+    if ! [[ $selectTable =~ $alphaRegex ]]
+    then
+        echo "Please enter a valid table name"
+    else
+        check_tableName=`ls | grep ^$selectTable$`
+        if [ $check_tableName ]
+        then
+            colNames=`sed -n '2p' $DB_DIR/$dbname/$selectTable`
+            typeset -i col_num
+            col_num=`head -1 $DB_DIR/$dbname/$selectTable`
+            select choice in "select all" "select by column" "exit"
+            do
+                case $REPLY in
+                1) echo -e "\nselect * from $selectTable"
+                    read -r -p "Include CONSTRAINT 'where clause'? [y/N] " response
+                    IFS=:
+                    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+                    then
+                        echo "select column to filter by:"
+                        select field in $colNames Exit
+                        do
+                            if [[ $REPLY =~ ^[0-9]+$ ]]
+                            then
+                                if ! [ $REPLY -gt  $col_num ]
+                                then
+                                    read -p "select * from $selectTable where $field = " value
+
+                                    awk -F: -v FIELD=$REPLY -v DATA=$value '{if($FIELD == DATA) print}' $DB_DIR/$dbname/$selectTable
+                                    break
+                                else
+                                    echo "Please select one of the choices"
+                                    break
+                                fi
+                            else
+                                echo "Please select one of the choices"
+                            fi
+                        done
+                    else
+                        echo $colNames
+                        tail +6 $DB_DIR/$dbname/$selectTable
+                        echo -e "\n"
+                    fi                    
+                    break;;
+
+                # select name from table (by column)
+                2) echo "How many columns you want ?"
+                    read num_of_cols
+                    until [[ $num_of_cols =~ ^[0-9]+$ ]] && [ $num_of_cols -le $col_num ]
+                    do
+                        echo "Please enter a valid number of columns"
+                        echo -e "The table has $col_num columns \n$colNames"
+                        read -p "#columns = " num_of_cols
+                    done
+                    
+                    typeset -i counter
+                    counter=1
+                    fields=""
+                    until [ $counter -gt $num_of_cols ]
+                    do
+                        IFS=:
+                        echo -e "\nSelect column No.$counter:"
+                        select field in $colNames Exit
+                        do
+                            if ! [ $REPLY -gt  $col_num ]
+                            then
+                                fields+="$field,"
+                                temp+="$REPLY,"
+                                break
+                            else
+                                echo "Please select one of the choices"
+                                break
+                            fi
+                        done
+                        counter=$counter+1
+                    done
+
+                    read -r -p "Include CONSTRAINT 'where clause'? [y/N] " response
+                    IFS=:
+                    if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]
+                    then
+                        echo "select column to filter by:"
+                        select entry in $colNames Exit
+                        do
+                            if [[ $REPLY =~ ^[0-9]+$ ]]
+                            then
+                                if ! [ $REPLY -gt  $col_num ]
+                                then
+                                    read -p "select ${fields:0:-1} from $selectTable where $entry = " value
+
+                                    awk -F: -v FIELD=$REPLY -v DATA=$value '{if($FIELD == DATA) print}' $DB_DIR/$dbname/$selectTable | cut -f ${temp:0:-1} -d:
+                                    break
+                                else
+                                    echo "Please select one of the choices"
+                                    break
+                                fi
+                            else
+                                echo "Please select one of the choices"
+                            fi
+                        done
+                    
+                    else
+                        echo -e "\nselect ${fields:0:-1} from $selectTable"
+                        cut -f ${temp:0:-1} -d: $DB_DIR/$dbname/$selectTable | sed -n 2p
+                        cut -f ${temp:0:-1} -d: $DB_DIR/$dbname/$selectTable | tail +6
+                        echo -e "\n"
+                    fi     
+
+                    break;;
+                
+                3) break;;
+                
+                *) echo $REPLY is not one of the choices.
+                    echo Try again
+                esac
+            done
+        else
+            echo "Table $selectTable doesn't exist"
+        fi
+    fi
+}
+
 while true
 do
     select choice in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table" "Disconnect"
     do
         case $REPLY in
         1) createTable
-            break;
-        ;;
+            break;;
         
         2) listTables
-            break;
-        ;;
+            break;;
         
         3) dropTable 
-            break;
-        ;;
+            break;;
         
         4) echo Insert into table
-        ;;
+            break;;
         
-        5) echo Select from table
-        ;;
+        5) selectFromTable
+            break;;
         
         6) echo Delete from table
-        ;;
+            break;;
         
         7) echo update table
-        ;;
+            break;;
 
         8) echo You are Disconnected
-        source $WORKING_DIR/project.sh
-        ;;
+            source $WORKING_DIR/project.sh
+            break;;
         
         *) echo $REPLY is not one of the choices.
-        echo Try again
+            echo Try again
+        
         esac
     done
 done
