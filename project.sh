@@ -1,6 +1,6 @@
 #!/usr/bin/bash 
 
-WORKING_DIR=~/bash_project
+WORKING_DIR=~/Bash_Project
 DB_DIR=$WORKING_DIR/DBM
 
 # creating DBM if doesn't exist
