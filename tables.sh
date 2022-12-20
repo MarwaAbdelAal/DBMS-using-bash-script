@@ -154,20 +154,18 @@ function writeMetaData {
 }
 
 
-function insert_data ()
-{
-            databases_num=`ls $DB_DIR/$1 | wc -l`
 
-            select tables in `ls $DB_DIR/$1` "Exit"
+function insert_data()
+{
+            databases_num=`ls $DB_DIR/$dbname/ | wc -l`
+            echo $databases_num
+            select tables in `ls $DB_DIR/$dbname` "Exit"
             do 
 
             if [ $REPLY -gt $databases_num ]
             then 
-                exit
-
-            else [ $REPLY -lt $databases_num ] || [ $REPLY -eq $databases_num ]
-
-                # echo $REPLY
+                break;
+            else
                 table_name=`ls $DB_DIR/$dbname/ | head -$REPLY`
                 echo $table_name
 
@@ -176,8 +174,6 @@ function insert_data ()
                 
                 table_pk=`grep primary_key $DB_DIR/$dbname/$table_name | cut -d : -f2`
                 echo $table_pk
-
-                # echo $col_num
                         
                 typeset -i counter
                 counter=1
@@ -210,8 +206,6 @@ function insert_data ()
                             done 
                         fi
                         
-                        # echo $data
-
                     elif [ $data_type="int" ]
                     then 
                         if [ $null_status = "null" ]
@@ -247,7 +241,6 @@ function insert_data ()
                             read data
                         done
                         fi
-                        # echo $data
                 
                     fi
                     
@@ -262,7 +255,8 @@ function insert_data ()
                         do 
                             echo you cannot repeat primary key! try again: 
                             read data
-                            isUnique="`awk  -F ':' -v COL=$counter -v VALUE=^$data$ '$COL ~ VALUE {print $0;}' $DB_DIR/$1/$table_name`"
+                            echo $dbname
+                            isUnique="`awk  -F ':' -v COL=$counter -v VALUE=^$data$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
                         done
 
                     fi
@@ -276,13 +270,13 @@ function insert_data ()
 
                 counter=counter+1
                 done
-                # echo $row_data 
                 echo $row_data >> $DB_DIR/$dbname/$table_name 
                 echo one record inserted 
             fi
-        exit
-    done     
+            exit
+            done     
 }
+
 
 function selectFromTable {
     echo "This is all tables"
@@ -410,6 +404,75 @@ function selectFromTable {
     fi
 }
 
+
+function delete()
+{
+        databases_num=`ls $DB_DIR/$dbname/ | wc -l`
+        select tables in `ls $DB_DIR/$dbname` "Exit"
+        do 
+            if [ $REPLY -gt $databases_num ]
+            then 
+                break;
+            else
+                table_name=`ls $DB_DIR/$dbname/ | head -$REPLY`
+                echo $table_name
+
+                select option in "Delete All" "With Constrain" Exit
+                do 
+                    case $REPLY in 
+                    1) echo "Are you sure you want to delete ALL ? y/n "
+                        read answer
+                        if [[ $answer =~ ^[yY] ]]
+                        then
+                            touch $DB_DIR/$dbname/new_table_name.txt
+                            head -5 $DB_DIR/$dbname/$table_name  >> $DB_DIR/$dbname/new_table_name.txt
+                            mv $DB_DIR/$dbname/new_table_name.txt $DB_DIR/$dbname/$table_name
+                            echo All rows Deleted
+                            
+                        elif [[ $answer =~ ^[nN] ]]
+                        then
+                            break;
+                        fi
+                    ;;
+                    
+                    2) typeset -i col_num
+                        col_num=`head -1 $DB_DIR/$dbname/$table_name`
+                        
+                        columns=`tail +2 $DB_DIR/$dbname/$table_name | head -1 `
+                        IFS=:
+
+                        select field in $columns "Exit"
+                        do 
+                            if ! [ $REPLY -gt  $col_num ]
+                            then    
+                                echo $field
+                                echo $REPLY
+                                echo "Delete from $table_name where $field = "
+                                read value
+                                touch $DB_DIR/$dbname/new_table_name.txt
+                                head -5 $DB_DIR/$dbname/$table_name  >> $DB_DIR/$dbname/new_table_name.txt
+                                delete=`awk -F ':' -v FIELD=$REPLY -v DATA=$value '{if( (NR>5) && ($FIELD != DATA) ) print}' $DB_DIR/$dbname/$table_name >> $DB_DIR/$dbname/new_table_name.txt `
+                                mv $DB_DIR/$dbname/new_table_name.txt $DB_DIR/$dbname/$table_name
+                                break;
+                            else
+                                break;
+                            fi
+                        done
+                        break;
+                        ;;
+                    
+                    3) break;
+                    ;;
+                    esac
+                done
+                break;
+            fi
+            break;
+        done
+}
+
+
+
 while true
 do
     select choice in "Create Table" "List Tables" "Drop Table" "Insert into Table" "Select From Table" "Delete From Table" "Update Table" "Disconnect"
@@ -431,7 +494,8 @@ do
             break;;
         
         6) echo Delete from table
-            break;;
+           delete
+           break;;
         
         7) echo update table
             break;;
