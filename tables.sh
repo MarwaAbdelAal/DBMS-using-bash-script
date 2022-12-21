@@ -158,10 +158,7 @@ function writeMetaData {
 function insert_data()
 {
             databases_num=`ls $DB_DIR/$dbname/ | wc -l`
-<<<<<<< HEAD
-=======
             echo $databases_num
->>>>>>> 5b417d9cbe62465fb3f1516b0871b24dd265e549
             select tables in `ls $DB_DIR/$dbname` "Exit"
             do 
 
@@ -175,10 +172,7 @@ function insert_data()
                 col_num=`head -1 $DB_DIR/$dbname/$table_name`
                 
                 table_pk=`grep primary_key $DB_DIR/$dbname/$table_name | cut -d : -f2`
-<<<<<<< HEAD
-=======
                 echo $table_pk
->>>>>>> 5b417d9cbe62465fb3f1516b0871b24dd265e549
                         
                 typeset -i counter
                 counter=1
@@ -324,10 +318,7 @@ function insert_data()
                         do 
                             echo you cannot repeat primary key! try again: 
                             read data
-<<<<<<< HEAD
-=======
                             echo $dbname
->>>>>>> 5b417d9cbe62465fb3f1516b0871b24dd265e549
                             isUnique="`awk  -F ':' -v COL=$counter -v VALUE=^$data$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
                         done
 
@@ -342,24 +333,18 @@ function insert_data()
 
                 counter=counter+1
                 done
-<<<<<<< HEAD
                 if ! [ -z $row_data ]
                 then
-=======
->>>>>>> 5b417d9cbe62465fb3f1516b0871b24dd265e549
                 echo $row_data >> $DB_DIR/$dbname/$table_name 
                 echo one record inserted 
                 else
                    break;
                 fi
             fi
-<<<<<<< HEAD
             break;
     done     
-=======
             exit
             done     
->>>>>>> 5b417d9cbe62465fb3f1516b0871b24dd265e549
 }
 
 
@@ -556,7 +541,6 @@ function delete()
         done
 }
 
-<<<<<<< HEAD
 function update()
 {
             databases_num=`ls $DB_DIR/$dbname | wc -l`
@@ -785,8 +769,6 @@ function update()
                 break
             done   
 }
-=======
->>>>>>> 5b417d9cbe62465fb3f1516b0871b24dd265e549
 
 
 while true
@@ -814,10 +796,7 @@ do
            break;;
         
         7) echo update table
-<<<<<<< HEAD
             update
-=======
->>>>>>> 5b417d9cbe62465fb3f1516b0871b24dd265e549
             break;;
 
         8) echo You are Disconnected
