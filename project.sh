@@ -13,7 +13,7 @@ do
 		case $REPLY in 
 	
 		1)  echo "Enter new database name:"
-			read dbname
+			read -r dbname
 			if ! [[ $dbname =~ ^[a-zA-Z_][a-zA-Z_0-9]+$ ]]
 			then
 				echo "Avoid using special characters"
@@ -35,7 +35,7 @@ do
 		3)  echo "This is all databases: "
 			ls -F $DB_DIR/ | grep "/" | cut -f1 -d'/'
 			echo "Enter database name to connect"
-			read dbname
+			read -r dbname
             check_dbname=`ls $DB_DIR/ | grep ^$dbname$`
 		   	if [ -z $check_dbname ]
             then
@@ -51,7 +51,7 @@ do
 	    4)	echo "This is all databases: " 
 			ls -F $DB_DIR/ | grep "/" | cut -f1 -d '/'
 			echo "Enter database name to drop" 
-		   	read dbname
+		   	read -r dbname
 		   	check_dbname=`ls $DB_DIR/ | grep ^$dbname$`
             if [ -z $check_dbname ]
             then
