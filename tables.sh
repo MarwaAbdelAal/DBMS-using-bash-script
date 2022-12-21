@@ -9,7 +9,6 @@ function dropTable {
         then
             echo $REPLY is not one of the choices.
             echo Try again 
-            break;
         else
 
             if [ $REPLY -gt $tables_num ]
@@ -47,8 +46,8 @@ function listTables {
 
 function createTable {
     echo "Enter new table Name"
-    read newTable
-    if ! [[ $newTable =~ $alphaRegex ]]
+    read -r newTable
+    if ! [[ $newTable =~ ^[a-zA-Z_][a-zA-Z_0-9]+$ ]]
     then
         echo "Please enter a valid table name"
     else
@@ -75,7 +74,7 @@ function createTable {
             do
                 echo -e "\nEnter column No.$counter name: \c"
                 read -r colName
-                until [[ $colName =~ $alphaRegex ]]
+                until [[ $colName =~ ^[a-zA-Z_][a-zA-Z_0-9]+$ ]]
                 do
                     echo "Please enter a valid column name for col No.$counter"
                     read -r colName
@@ -126,6 +125,21 @@ function createTable {
                         
                         *) echo "Wrong Choice" ;;
                         esac
+                    done
+                else
+                    echo -e "\nSelect column to be NULL or NOT_NULL"
+                    select choice in NULL NOT_NULL
+                    do
+                        case $REPLY in
+                        1) col_null[$counter-1]="null"
+                        break;;
+                        
+                        2) col_null[$counter-1]="not_null"
+                        break;;
+
+                        *) echo $REPLY is not one of the choices.
+                            echo Try again
+                    esac
                     done
                 fi
 
@@ -310,7 +324,7 @@ function insert_data()
                         then  
                             echo  NOT_NULL Entry ! try again
                             read -r data
-                            while [-z $data ]
+                            while [ -z $data ]
                             do
                                 echo  NOT_NULL Entry ! try again
                                 read -r data
@@ -339,7 +353,7 @@ function insert_data()
             
                 fi
                 
-                if [ $table_pk=$col_name ]
+                if [ $table_pk = $col_name ]
                 then
                     isUnique=`awk  -v COL=$counter -v VALUE=^$data$ 'BEGIN{OFS="__";FS=":"} {if((NR>5) && ($COL ~ VALUE)) print $0;}' $DB_DIR/$dbname/$table_name`
                     echo $isUnique
@@ -348,7 +362,6 @@ function insert_data()
                     do 
                         echo you cannot repeat primary key! try again: 
                         read -r data
-                        echo $dbname
                         isUnique="`awk -v COL=$counter -v VALUE=^$data$ 'BEGIN{OFS="__";FS=":"} {if((NR>5) && ($COL ~ VALUE)) print $0;}' $DB_DIR/$dbname/$table_name`"
                     done
                     unset IFS
@@ -367,7 +380,6 @@ function insert_data()
             if !  [[ $row_data =~ ^[=]$ ]]
             then
             echo $row_data >> $DB_DIR/$dbname/$table_name 
-            echo one record inserted 
             else
                 break;
             fi
@@ -631,14 +643,12 @@ function update()
                 then
                     echo $REPLY is not one of the choices.
                     echo Try again 
-                    break;
                 else
                     
                     if  [ $REPLY -gt  $col_num ]
                     then    
                         break;
                     else
-                        # echo $REPLY
                         echo "Update table $table_name set $field = "
                         Data_Field=$REPLY
                         read -r Data_value
@@ -662,16 +672,12 @@ function update()
                                 then  
                                     echo  NOT_NULL Entry ! try again
                                     read -r Data_value
-                                    while [-z $Data_value ]
+                                    while [ -z $Data_value ]
                                     do
                                         echo  NOT_NULL Entry ! try again
                                         read -r Data_value
                                     done
-<<<<<<< HEAD
-                                while ! [[ $Data_value =~ ^[a-zA-Z]+$ ]]
-=======
                                 while ! [[ $Data_value  =~ ^[a-zA-Z[:space:]]+$ ]]
->>>>>>> 4e00a528ef86710c34876074dd7c152705e6d979
                                     do
                                             echo $Data_value 
                                             echo  Please Enter valid value ! try again
@@ -679,11 +685,7 @@ function update()
                                     done
                                 fi
                             else
-<<<<<<< HEAD
-                                while ! [[ $Data_value =~ ^[a-zA-Z]+$ ]]
-=======
                                 while ! [[ $Data_value  =~ ^[a-zA-Z[:space:]]+$ ]]
->>>>>>> 4e00a528ef86710c34876074dd7c152705e6d979
                                     do
                                             if [ -z $Data_value ]
                                             then 
@@ -712,7 +714,7 @@ function update()
                                 then  
                                     echo  NOT_NULL Entry ! try again
                                     read -r Data_value
-                                    while [-z $Data_value ]
+                                    while [ -z $Data_value ]
                                     do
                                         echo  NOT_NULL Entry ! try again
                                         read -r Data_value
@@ -754,7 +756,7 @@ function update()
                                 then  
                                     echo  NOT_NULL Entry ! try again
                                     read -r Data_value
-                                    while [-z $Data_value ]
+                                    while [ -z $Data_value ]
                                     do
                                         echo  NOT_NULL Entry ! try again
                                         read -r Data_value
@@ -783,7 +785,7 @@ function update()
                                 done
                     fi
                 fi
-                if [ $table_pk=$field ]
+                if [ $table_pk = $field ]
                     then
                         isUnique="`awk  -F ':' -v COL=$REPLY -v VALUE=^$Data_value$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
                         echo $isUnique
@@ -792,7 +794,6 @@ function update()
                         do 
                             echo you cannot repeat primary key! try again: 
                             read Data_value
-                            echo $dbname
                             isUnique="`awk  -F ':' -v COL=$REPLY -v VALUE=^$Data_value$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
                         done
                 fi
@@ -806,14 +807,20 @@ function update()
                 read answer
                 if [[ $answer =~ ^[yY] ]]
                 then
-                    
+                    if [ $table_pk = $field ]
+                    then 
+                         echo -e "You cannot repeat Primary Key\n 0 Rows affected"
+                         break
+                    else
+                    typeset -i counter
+                    counter=0
                     touch $DB_DIR/$dbname/new_table_name.txt
                     head -5 $DB_DIR/$dbname/$table_name  > $DB_DIR/$dbname/new_table_name.txt
                     path=$DB_DIR/$dbname/new_table_name.txt
-                    awk -v VALUE_FIELD=$Data_field -v DATA=$Data_value  'BEGIN{FS=OFS=":"} {if(NR>5) { $VALUE_FIELD=DATA; print $0 >> PATH }  }' $DB_DIR/$dbname/$table_name
+                    awk -v VALUE_FIELD=$Data_Field -v DATA=$Data_value -v PATH=$path -v COUNTER=$counter 'BEGIN{FS=OFS=":"} {if(NR>5) { $VALUE_FIELD=DATA; print $0 > PATH; COUNTER++ } else {print $0 > PATH}} END{print COUNTER, "rows affected"}' $DB_DIR/$dbname/$table_name
                     mv $path $DB_DIR/$dbname/$table_name
-                    echo All rows Updated
                     break
+                    fi
                 fi
             ;;
             2)  echo "Update table $table_name set column $Data_Field where column:"
@@ -823,19 +830,19 @@ function update()
                     then
                         echo $REPLY is not one of the choices.
                         echo Try again 
-                        break;
                     else
 
                         if ! [ $REPLY -gt  $col_num ]
-                        then    
+                        then   
+                            typeset -i counter
+                            counter=0 
                             echo $REPLY
                             echo "Update from $table_name Where $Constraint_field = "
                             read Constraint_Value
                             touch $DB_DIR/$dbname/new_table_name.txt
                             path=$DB_DIR/$dbname/new_table_name.txt
-                            awk -v PATH=$path -v CONSTRAINT_FIELD=$REPLY  -v VALUE_FIELD=$Data_Field -v DATA=$Data_value -v CONSTRAINT=$Constraint_Value 'BEGIN{FS=OFS=":"}{if( (NR>5) && ($CONSTRAINT_FIELD == CONSTRAINT)) { $VALUE_FIELD=DATA; print $0 > PATH } else {print $0 > PATH} }' $DB_DIR/$dbname/$table_name
+                            awk -v PATH=$path -v CONSTRAINT_FIELD=$REPLY  -v VALUE_FIELD=$Data_Field -v DATA=$Data_value -v CONSTRAINT=$Constraint_Value -v COUNTER=$counter 'BEGIN{FS=OFS=":"}{if( (NR>5) && ($CONSTRAINT_FIELD == CONSTRAINT)) { $VALUE_FIELD=DATA; print $0 > PATH; COUNTER++ } else {print $0 > PATH} } END{print COUNTER, "rows affected"}' $DB_DIR/$dbname/$table_name
                             mv $path $DB_DIR/$dbname/$table_name
-                            echo "Rows Updated Successfully"
                             break;
                         else
                             break;
@@ -852,7 +859,6 @@ function update()
         done
         break
 
-    # fi
     break
 
         fi
