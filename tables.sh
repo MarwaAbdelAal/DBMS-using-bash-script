@@ -355,7 +355,7 @@ function insert_data()
                 then
                     isUnique=`awk  -v COL=$counter -v VALUE=^$data$ 'BEGIN{OFS="__";FS=":"} {if((NR>5) && ($COL ~ VALUE)) print $0;}' $DB_DIR/$dbname/$table_name`
                     echo $isUnique
-        
+                    IFS=';'
                     until [ -z $isUnique ]
                     do 
                         echo you cannot repeat primary key! try again: 
@@ -363,7 +363,7 @@ function insert_data()
                         echo $dbname
                         isUnique="`awk -v COL=$counter -v VALUE=^$data$ 'BEGIN{OFS="__";FS=":"} {if((NR>5) && ($COL ~ VALUE)) print $0;}' $DB_DIR/$dbname/$table_name`"
                     done
-        
+                    unset IFS
                 fi
         
                 if  [[ $row_data =~ ^[=]$ ]]
