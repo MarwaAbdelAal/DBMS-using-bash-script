@@ -1,6 +1,6 @@
 #!/usr/bin/bash 
 
-WORKING_DIR=~/Bash_Project
+WORKING_DIR=~/bash_project
 DB_DIR=$WORKING_DIR/DBM
 
 # creating DBM if doesn't exist
@@ -28,12 +28,12 @@ do
 			fi
 		    break;;
 
-	    2) ls -F $DB_DIR | grep "/" | cut -f1 -d'/'
+	    2) ls -F $DB_DIR/ | grep "/" | cut -f1 -d '/'
 		   break;
             ;;
 		  
 		3)  echo "This is all databases: "
-			ls -F $DB_DIR | grep "/" | cut -f1 -d'/'
+			ls -F $DB_DIR/ | grep "/" | cut -f1 -d'/'
 			echo "Enter database name to connect"
 			read dbname
             check_dbname=`ls $DB_DIR/ | grep ^$dbname$`
@@ -49,7 +49,7 @@ do
 		;;
 
 	    4)	echo "This is all databases: " 
-			ls -F $DB_DIR | grep "/" | cut -f1 -d'/'
+			ls -F $DB_DIR/ | grep "/" | cut -f1 -d '/'
 			echo "Enter database name to drop" 
 		   	read dbname
 		   	check_dbname=`ls $DB_DIR/ | grep ^$dbname$`
