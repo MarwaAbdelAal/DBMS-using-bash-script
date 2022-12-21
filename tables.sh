@@ -1,5 +1,5 @@
 #!/bin/bash
-alphaRegex=^[a-zA-Z_]+$
+alphaRegex=^[a-zA-Z_[:space:]]+$
 function dropTable {
     echo "Select table name you want to drop: "
     tables_num=`ls $DB_DIR/$dbname/ | wc -l`
@@ -181,6 +181,8 @@ function insert_data()
     tables_num=`ls $DB_DIR/$dbname/ | wc -l`
     select tables in `ls $DB_DIR/$dbname` "Exit"
     do 
+        IFS=';'
+        row_data="="
         if ! [[ $REPLY =~ ^[0-9]+$ ]]
         then
             echo $REPLY is not one of the choices.
@@ -197,7 +199,7 @@ function insert_data()
             fi
         else
             table_name=`ls $DB_DIR/$dbname/ | tail +$REPLY | head -1`
-            # echo $table_name
+            echo $table_name
             typeset -i col_num
             col_num=`head -1 $DB_DIR/$dbname/$table_name`
             
@@ -205,6 +207,17 @@ function insert_data()
                     
             typeset -i counter
             counter=1
+
+            until [ $counter -gt $col_num ]
+            do
+                col_name=`tail +2 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter` 
+                echo Enter $col_name column value  
+                read -r data 
+                echo $data
+
+                #  Check data type 
+                data_type=`tail +3 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter`      
+                null_status=`tail +4 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter`
 
             until [ $counter -gt $col_num ]
             do
@@ -233,21 +246,22 @@ function insert_data()
                                 echo  NOT_NULL Entry ! try again
                                 read -r data
                             done
-                            while ! [[ $data =~ $alphaRegexs || $data = "null" ]]
+                            while ! [[ $data =~ ^[a-zA-Z_[:space:]]+$ ]]
                             do
                                 echo  "Please Enter valid value ! try again"
                                 read -r data
                             done
                         fi
                     else
-                        while ! [[ $data =~ $alphaRegexs ]]
-                        do
-                            if [ -z $data ]
-                            then 
-                                if [ $null_status = "null" ]
-                                then
-                                    data="null"
-                                    break;
+                        while ! [[ $data =~ ^[a-zA-Z_[:space:]]+$ ]]
+                            do
+                                if [ -z $data ]
+                                then 
+                                    if [ $null_status = "null" ]
+                                    then
+                                        data="null"
+                                        break;
+                                    fi
                                 fi
                             fi
                             echo  "Please Enter valid value ! try again"
@@ -352,7 +366,7 @@ function insert_data()
         
                 fi
         
-                if [ -z $row_data ]
+                if  [[ $row_data =~ ^[=]$ ]]
                 then 
                     row_data=$data
                 else
@@ -362,17 +376,18 @@ function insert_data()
                 counter=counter+1
             done
         
-                if ! [ -z $row_data ]
-                then
-                    echo $row_data >> $DB_DIR/$dbname/$table_name 
-                    echo one record inserted 
-                else
-                    break;
-                fi
+            if !  [[ $row_data =~ ^[=]$ ]]
+            then
+            echo $row_data >> $DB_DIR/$dbname/$table_name 
+            echo one record inserted 
+            else
+                break;
             fi
         break;
         fi
-    done     
+    break;
+    done    
+    unset IFS
 }
 
 function selectFromTable {
@@ -561,6 +576,7 @@ function delete()
                                     echo $field
                                     echo $REPLY
                                     echo "Delete from $table_name where $field = "
+                                    IFS=";"
                                     read -r value
                                     touch $DB_DIR/$dbname/new_table_name.txt
                                     head -5 $DB_DIR/$dbname/$table_name  >> $DB_DIR/$dbname/new_table_name.txt
@@ -589,6 +605,7 @@ function delete()
             break;
         fi
     done
+    unset IFS
 }
 
 function update()
@@ -597,6 +614,7 @@ function update()
 
     select tables in `ls $DB_DIR/$dbname` "Exit"
     do 
+    IFS=";"
     if ! [[ $REPLY =~ ^[0-9]+$ ]]
     then
         echo $REPLY is not one of the choices.
@@ -666,13 +684,75 @@ function update()
                                 do
                                     echo  NOT_NULL Entry ! try again
                                     read -r Data_value
-                                done
-                            while ! [[ $Data_value =~ $alphaRegexs ]]
-                                do
-                                    echo $Data_value 
-                                    echo  "Please Enter valid value ! try again"
+                                    while [-z $Data_value ]
+                                    do
+                                        echo  NOT_NULL Entry ! try again
+                                        read -r Data_value
+                                    done
+                                while ! [[ $data =~ ^[a-zA-Z[:space:]]+$ ]]
+                                    do
+                                            echo $Data_value 
+                                            echo  Please Enter valid value ! try again
+                                            read -r Data_value
+                                    done
+                                fi
+                            else
+                                while ! [[ $data =~ ^[a-zA-Z[:space:]]+$ ]]
+                                    do
+                                            if [ -z $Data_value ]
+                                            then 
+                                                if [ $null_status = "null" ]
+                                                    then
+                                                        Data_value="null"
+                                                        break;
+                                                fi
+                                            fi
+                                            echo $Data_value 
+                                            echo  Please Enter valid value ! try again
+                                            read -r Data_value
+                                    done
+                            fi
+                            
+                        elif [ $data_type = "int" ]
+                        then
+                            echo $Data_value 
+                            if [ -z $Data_value ]
+                            then 
+                                if [ $null_status = "null" ]
+                                then
+                                    Data_value="null"
+
+                                elif [ $null_status = "not_null" ]
+                                then  
+                                    echo  NOT_NULL Entry ! try again
                                     read -r Data_value
-                                done
+                                    while [-z $Data_value ]
+                                    do
+                                        echo  NOT_NULL Entry ! try again
+                                        read -r Data_value
+                                    done
+                                    while  [[ ! $Data_value =~ ^[0-9]+$  ]]
+                                    do
+                                            echo $Data_value 
+                                            echo  Please Enter valid value ! try again
+                                            read -r Data_value
+                                    done
+                                fi
+                            else
+                                    while  [[ ! $Data_value =~ ^[0-9]+$ ]]
+                                    do
+                                            if [ -z $Data_value ]
+                                            then 
+                                                if [ $null_status = "null" ]
+                                                    then
+                                                        Data_value="null"
+                                                        break;
+                                                fi
+                                            fi
+                                            echo $Data_value 
+                                            echo  Please Enter valid value ! try again
+                                            read -r Data_value
+                                    done
                             fi
                         else
                             while ! [[ $Data_value =~ $alphaRegexs ]]
@@ -854,7 +934,8 @@ function update()
     fi
     break;
         fi
-    done   
+    done  
+    unset IFS
 }
 
 while true
