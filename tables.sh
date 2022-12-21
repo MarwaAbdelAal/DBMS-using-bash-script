@@ -852,7 +852,8 @@ function update()
     fi
     break;
         fi
-    done   
+    done 
+    unset IFS  
 }
 
 while true
