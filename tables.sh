@@ -323,7 +323,7 @@ function insert_data()
         
                 fi
         
-                if if [[ $row_data =~ ^[=]$ ]]
+                if  [[ $row_data =~ ^[=]$ ]]
                 then 
                         row_data=$data
                 else
@@ -333,7 +333,7 @@ function insert_data()
                 counter=counter+1
             done
         
-            if ! if [[ $row_data =~ ^[=]$ ]]
+            if !  [[ $row_data =~ ^[=]$ ]]
             then
             echo $row_data >> $DB_DIR/$dbname/$table_name 
             echo one record inserted 
