@@ -342,7 +342,8 @@ function insert_data()
             fi
         fi
     break;
-    done     
+    done    
+    unset IFS
 }
 
 
@@ -555,6 +556,7 @@ function delete()
             break;
         fi
     done
+    unset IFS
 }
 
 function update()
@@ -812,7 +814,8 @@ function update()
     fi
     break;
         fi
-    done   
+    done  
+    unset IFS
 }
 
 while true
