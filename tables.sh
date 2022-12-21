@@ -211,17 +211,6 @@ function insert_data()
             until [ $counter -gt $col_num ]
             do
                 col_name=`tail +2 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter` 
-                echo Enter $col_name column value  
-                read -r data 
-                echo $data
-
-                #  Check data type 
-                data_type=`tail +3 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter`      
-                null_status=`tail +4 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter`
-
-            until [ $counter -gt $col_num ]
-            do
-                col_name=`tail +2 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $counter` 
                 echo "Enter $col_name column value"  
                 read -r data
                 
@@ -246,22 +235,21 @@ function insert_data()
                                 echo  NOT_NULL Entry ! try again
                                 read -r data
                             done
-                            while ! [[ $data =~ ^[a-zA-Z_[:space:]]+$ ]]
+                            while ! [[ $data =~ $alphaRegex ]]
                             do
                                 echo  "Please Enter valid value ! try again"
                                 read -r data
                             done
                         fi
                     else
-                        while ! [[ $data =~ ^[a-zA-Z_[:space:]]+$ ]]
+                        while ! [[ $data =~ $alphaRegex ]]
                             do
-                                if [ -z $data ]
-                                then 
-                                    if [ $null_status = "null" ]
-                                    then
-                                        data="null"
-                                        break;
-                                    fi
+                            if [ -z $data ]
+                            then 
+                                if [ $null_status = "null" ]
+                                then
+                                    data="null"
+                                    break;
                                 fi
                             fi
                             echo  "Please Enter valid value ! try again"
@@ -384,6 +372,7 @@ function insert_data()
                 break;
             fi
         break;
+        fi
         fi
     break;
     done    
@@ -611,25 +600,20 @@ function delete()
 
 function update()
 {
-    tables_num=`ls $DB_DIR/$dbname | wc -l`
+    databases_num=`ls $DB_DIR/$dbname | wc -l`
 
     select tables in `ls $DB_DIR/$dbname` "Exit"
     do 
-    IFS=";"
     if ! [[ $REPLY =~ ^[0-9]+$ ]]
     then
         echo $REPLY is not one of the choices.
         echo Try again 
+        break;
     else
 
-    if [ $REPLY -gt $tables_num ]
+    if [ $REPLY -gt $databases_num ]
     then
-        if [[ $tables == "Exit" ]]
-        then 
-            break
-        else
-            echo "Please select a valid choice" 
-        fi
+        break;
     else
         table_name=`ls $DB_DIR/$dbname/ | tail +$REPLY | head -1`
         echo $table_name
@@ -643,46 +627,39 @@ function update()
         echo "Update table $table_name set column:"
         select field in $columns "Exit"
         do 
-            if ! [[ $REPLY =~ ^[0-9]+$ ]]
-            then
-                echo $REPLY is not one of the choices.
-                echo Try again 
-            else
-                
-                if  [ $REPLY -gt  $col_num ]
-                then    
-                    if [[ $field == "Exit" ]]
-                    then 
-                        break
-                    else
-                        echo "Please select a valid choice" 
-                    fi
+                if ! [[ $REPLY =~ ^[0-9]+$ ]]
+                then
+                    echo $REPLY is not one of the choices.
+                    echo Try again 
+                    break;
                 else
-                    echo "Update table $table_name set $field = "
-                    Data_Field=$REPLY
-                    read -r Data_value
+                    
+                    if  [ $REPLY -gt  $col_num ]
+                    then    
+                        break;
+                    else
+                        # echo $REPLY
+                        echo "Update table $table_name set $field = "
+                        Data_Field=$REPLY
+                        read -r Data_value
 
-                    #  Check data type 
-                    data_type=`tail +3 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $REPLY`      
-                    null_status=`tail +4 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $REPLY`
-                    table_pk=`grep primary_key $DB_DIR/$dbname/$table_name | cut -d : -f2`
+                        #  Check data type 
+                        data_type=`tail +3 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $REPLY`      
+                        null_status=`tail +4 $DB_DIR/$dbname/$table_name | head -1 | cut -d : -f $REPLY`
+                        table_pk=`grep primary_key $DB_DIR/$dbname/$table_name | cut -d : -f2`
 
 
-                    if [ $data_type = "string" ]
-                    then
-                        echo $Data_value 
-                        if [ -z $Data_value ]
-                        then 
-                            if [ $null_status = "null" ]
-                            then
-                                Data_value="null"
+                        if [ $data_type = "string" ]
+                        then
+                            echo $Data_value 
+                            if [ -z $Data_value ]
+                            then 
+                                if [ $null_status = "null" ]
+                                then
+                                    Data_value="null"
 
-                            elif [ $null_status = "not_null" ]
-                            then  
-                                echo  NOT_NULL Entry ! try again
-                                read -r Data_value
-                                while [-z $Data_value ]
-                                do
+                                elif [ $null_status = "not_null" ]
+                                then  
                                     echo  NOT_NULL Entry ! try again
                                     read -r Data_value
                                     while [-z $Data_value ]
@@ -690,7 +667,7 @@ function update()
                                         echo  NOT_NULL Entry ! try again
                                         read -r Data_value
                                     done
-                                while ! [[ $data =~ ^[a-zA-Z[:space:]]+$ ]]
+                                while ! [[ $Data_value =~ ^[a-zA-Z]+$ ]]
                                     do
                                             echo $Data_value 
                                             echo  Please Enter valid value ! try again
@@ -698,7 +675,7 @@ function update()
                                     done
                                 fi
                             else
-                                while ! [[ $data =~ ^[a-zA-Z[:space:]]+$ ]]
+                                while ! [[ $Data_value =~ ^[a-zA-Z]+$ ]]
                                     do
                                             if [ -z $Data_value ]
                                             then 
@@ -732,7 +709,7 @@ function update()
                                         echo  NOT_NULL Entry ! try again
                                         read -r Data_value
                                     done
-                                    while  [[ ! $Data_value =~ ^[0-9]+$  ]]
+                                    while  [[ ! $Data_value =~ ^[0-9]+$ || $Data_value = "null" ]]
                                     do
                                             echo $Data_value 
                                             echo  Please Enter valid value ! try again
@@ -755,50 +732,34 @@ function update()
                                             read -r Data_value
                                     done
                             fi
-                        else
-                            while ! [[ $Data_value =~ $alphaRegexs ]]
-                            do
-                                if [ -z $Data_value ]
-                                then 
-                                    if [ $null_status = "null" ]
-                                        then
-                                            Data_value="null"
-                                            break;
-                                    fi
-                                fi
-                                echo $Data_value 
-                                echo  "Please Enter valid value ! try again"
-                                read -r Data_value
-                            done
-                        fi
-                        
-                    elif [ $data_type = "int" ]
-                    then
-                        echo $Data_value 
-                        if [ -z $Data_value ]
-                        then 
-                            if [ $null_status = "null" ]
-                            then
-                                Data_value="null"
 
-                            elif [ $null_status = "not_null" ]
-                            then  
-                                echo  NOT_NULL Entry ! try again
-                                read -r Data_value
-                                while [-z $Data_value ]
-                                do
+                        elif [ $data_type = "float" ]
+                        then
+                            echo $Data_value 
+                            if [ -z $Data_value ]
+                            then 
+                                if [ $null_status = "null" ]
+                                then
+                                    Data_value="null"
+
+                                elif [ $null_status = "not_null" ]
+                                then  
                                     echo  NOT_NULL Entry ! try again
                                     read -r Data_value
-                                done
-                                while  [[ ! $Data_value =~ ^[0-9]+$ || $Data_value = "null" ]]
-                                do
-                                        echo $Data_value 
-                                        echo  "Please Enter valid value ! try again"
+                                    while [-z $Data_value ]
+                                    do
+                                        echo  NOT_NULL Entry ! try again
                                         read -r Data_value
-                                done
-                            fi
-                        else
-                                while  [[ ! $Data_value =~ ^[0-9]+$ ]]
+                                    done
+                                    while ! [[ $Data_value =~ ^[0-9]+([.][0-9]+)?$ ]]
+                                    do
+                                            echo $Data_value 
+                                            echo  Please Enter valid value ! try again
+                                            read -r Data_value
+                                    done
+                                fi
+                            else
+                                while ! [[ $Data_value =~ ^[0-9]+([.][0-9]+)?$ ]]
                                 do
                                         if [ -z $Data_value ]
                                         then 
@@ -809,66 +770,25 @@ function update()
                                             fi
                                         fi
                                         echo $Data_value 
-                                        echo  "Please Enter valid value ! try again"
+                                        echo  Please Enter valid value ! try again
                                         read -r Data_value
                                 done
-                        fi
-
-                    elif [ $data_type = "float" ]
+                    fi
+                fi
+                if [ $table_pk=$field ]
                     then
-                        echo $Data_value 
-                        if [ -z $Data_value ]
-                        then 
-                            if [ $null_status = "null" ]
-                            then
-                                Data_value="null"
+                        isUnique="`awk  -F ':' -v COL=$REPLY -v VALUE=^$Data_value$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
+                        echo $isUnique
 
-                            elif [ $null_status = "not_null" ]
-                            then  
-                                echo  NOT_NULL Entry ! try again
-                                read -r Data_value
-                                while [-z $Data_value ]
-                                do
-                                    echo  NOT_NULL Entry ! try again
-                                    read -r Data_value
-                                done
-                                while ! [[ $Data_value =~ ^[0-9]+([.][0-9]+)?$ ]]
-                                do
-                                        echo $Data_value 
-                                        echo  "Please Enter valid value ! try again"
-                                        read -r Data_value
-                                done
-                            fi
-                        else
-                            while ! [[ $Data_value =~ ^[0-9]+([.][0-9]+)?$ ]]
-                            do
-                                    if [ -z $Data_value ]
-                                    then 
-                                        if [ $null_status = "null" ]
-                                            then
-                                                Data_value="null"
-                                                break;
-                                        fi
-                                    fi
-                                    echo $Data_value 
-                                    echo  "Please Enter valid value ! try again"
-                                    read -r Data_value
-                            done
+                        until [[ -z $isUnique ]]
+                        do 
+                            echo you cannot repeat primary key! try again: 
+                            read Data_value
+                            echo $dbname
+                            isUnique="`awk  -F ':' -v COL=$REPLY -v VALUE=^$Data_value$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
+                        done
                 fi
             fi
-            if [ $table_pk = $field ]
-                then
-                    isUnique="`awk  -F ':' -v COL=$REPLY -v VALUE=^$Data_value$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
-                    echo $isUnique
-
-                    until [[ -z $isUnique ]]
-                    do 
-                        echo you cannot repeat primary key! try again: 
-                        read Data_value
-                        isUnique="`awk  -F ':' -v COL=$REPLY -v VALUE=^$Data_value$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
-                    done
-            fi
-        fi
 
 
         select option in "Update All" "With Constrain" "Exit"
@@ -895,10 +815,11 @@ function update()
                     then
                         echo $REPLY is not one of the choices.
                         echo Try again 
+                        break;
                     else
 
-                        if ! [ $REPLY -gt $col_num ]
-                        then
+                        if ! [ $REPLY -gt  $col_num ]
+                        then    
                             echo $REPLY
                             echo "Update from $table_name Where $Constraint_field = "
                             read Constraint_Value
@@ -909,12 +830,7 @@ function update()
                             echo "Rows Updated Successfully"
                             break;
                         else
-                            if [[ $tables == "Exit" ]]
-                            then 
-                                break
-                            else
-                                echo "Please select a valid choice" 
-                            fi
+                            break;
                         fi
                     fi
                 done
@@ -928,6 +844,7 @@ function update()
         done
         break
 
+    # fi
     break
 
         fi
@@ -935,8 +852,7 @@ function update()
     fi
     break;
         fi
-    done  
-    unset IFS
+    done   
 }
 
 while true
