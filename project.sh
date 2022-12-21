@@ -1,5 +1,4 @@
 #!/usr/bin/bash 
-
 WORKING_DIR=~/bash_project
 DB_DIR=$WORKING_DIR/DBM
 

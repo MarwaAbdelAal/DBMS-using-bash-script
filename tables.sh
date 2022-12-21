@@ -514,6 +514,7 @@ function selectFromTable {
             echo "Table $selectTable doesn't exist"
         fi
     fi
+    unset IFS
 }
 
 
