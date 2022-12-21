@@ -22,7 +22,7 @@ function listTables {
 }
 
 function createTable {
-    echo "Enter table Name"
+    echo "Enter new table Name"
     read newTable
     if ! [[ $newTable =~ $alphaRegex ]]
     then
@@ -73,23 +73,6 @@ function createTable {
                 esac
                 done
 
-                echo -e "\nSelect column to be NULL or NOT_NULL"
-                select choice in NULL NOT_NULL
-                do
-                    case $REPLY in
-                    1) col_null[$counter-1]="null"
-                    break;;
-                    
-                    2) col_null[$counter-1]="not_null"
-                    break;;
-
-                    *) echo $REPLY is not one of the choices.
-                        echo Try again
-                esac
-                done
-
-                counter=$counter+1
-
                 if [[ $pKey == "" ]]
                 then
                     echo -e "Make PrimaryKey ? "
@@ -98,15 +81,31 @@ function createTable {
                         case $var in
                         yes ) pKey="PK";
                             col_primary+=$colName
+                            col_null[$counter-1]="not_null"
                             break;;
                         
-                        no )
-                        break;;
+                        no ) echo -e "\nSelect column to be NULL or NOT_NULL"
+                            select choice in NULL NOT_NULL
+                            do
+                                case $REPLY in
+                                1) col_null[$counter-1]="null"
+                                break;;
+                                
+                                2) col_null[$counter-1]="not_null"
+                                break;;
+
+                                *) echo $REPLY is not one of the choices.
+                                    echo Try again
+                            esac
+                            done
+                            break;;
                         
                         *) echo "Wrong Choice" ;;
                         esac
                     done
                 fi
+
+                counter=$counter+1
             done
 
             echo "Table $newTable created successfully"
@@ -158,7 +157,6 @@ function writeMetaData {
 function insert_data()
 {
             databases_num=`ls $DB_DIR/$dbname/ | wc -l`
-            echo $databases_num
             select tables in `ls $DB_DIR/$dbname` "Exit"
             do 
 
@@ -166,13 +164,12 @@ function insert_data()
             then 
                 break;
             else
-                table_name=`ls $DB_DIR/$dbname/ | head -$REPLY`
-
+                table_name=`ls $DB_DIR/$dbname/ | tail +$REPLY | head -1`
+                echo $table_name
                 typeset -i col_num
                 col_num=`head -1 $DB_DIR/$dbname/$table_name`
                 
                 table_pk=`grep primary_key $DB_DIR/$dbname/$table_name | cut -d : -f2`
-                echo $table_pk
                         
                 typeset -i counter
                 counter=1
@@ -318,7 +315,6 @@ function insert_data()
                         do 
                             echo you cannot repeat primary key! try again: 
                             read data
-                            echo $dbname
                             isUnique="`awk  -F ':' -v COL=$counter -v VALUE=^$data$ '$COL ~ VALUE {print $0;}' $DB_DIR/$dbname/$table_name`"
                         done
 
@@ -343,8 +339,6 @@ function insert_data()
             fi
             break;
     done     
-            exit
-            done     
 }
 
 
