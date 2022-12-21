@@ -690,7 +690,7 @@ function update()
                                         echo  NOT_NULL Entry ! try again
                                         read -r Data_value
                                     done
-                                while ! [[ $data =~ ^[a-zA-Z[:space:]]+$ ]]
+                                while ! [[ $Data_value  =~ ^[a-zA-Z[:space:]]+$ ]]
                                     do
                                             echo $Data_value 
                                             echo  Please Enter valid value ! try again
@@ -698,7 +698,7 @@ function update()
                                     done
                                 fi
                             else
-                                while ! [[ $data =~ ^[a-zA-Z[:space:]]+$ ]]
+                                while ! [[ $Data_value  =~ ^[a-zA-Z[:space:]]+$ ]]
                                     do
                                             if [ -z $Data_value ]
                                             then 
